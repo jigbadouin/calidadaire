@@ -1,0 +1,122 @@
+---
+title: "Dashboard de calidad del aire"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(dygraphs)
+library(leaflet)
+library(plotly)
+set.seed(123)
+```
+
+```{r}
+fechas <- seq(as.Date("2020-02-01"), as.Date("2020-07-31"), by = "day")
+ozono <- runif(length(fechas), min = 30, max = 80)
+nox <- runif(length(fechas), min = 10, max = 50)
+```
+
+
+
+
+# Datos de O3 y NOx
+
+```{r}
+datos <- data.frame(fecha = fechas, ozono = ozono, nox = nox)
+```
+
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Ozono
+
+```{r}
+dygraph(datos[, c("fecha", "ozono")], main = "Niveles de Ozono") %>%
+  dyRangeSelector()
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### NOx
+
+```{r}
+dygraph(datos[, c("fecha", "nox")], main = "Niveles de NOx") %>%
+  dyRangeSelector()
+```
+
+### Tabla de datos
+
+```{r}
+datos %>%
+  knitr::kable()
+```
+
+# Regresión lineal 
+
+```{r}
+# Ajustar modelo de regresión lineal
+modelo <- lm(nox ~ ozono, data = datos)
+```
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+Gráfica de regresión
+```{r}
+# Crear gráfica interactiva con plotly
+p <- plot_ly(data = datos,
+             x = ~ozono,
+             y = ~nox,
+             type = "scatter",
+             mode = "markers") %>%
+  add_lines(x = ~ozono,
+            y = fitted(modelo),
+            line = list(color = "red"))
+
+p
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+Resumen del modelo
+```{r}
+summary(modelo)
+```
+
+
+# Datos de Calidad del aire 
+
+El **ozono** (O3) es una molécula compuesta por tres átomos de oxígeno. Es un gas incoloro e inestable que se encuentra en la atmósfera terrestre. A nivel del suelo, el ozono es considerado un contaminante peligroso para la salud humana y el medio ambiente.
+
+Los **óxidos de nitrógeno** (NOx) son un grupo de gases compuestos por óxido nítrico (NO) y dióxido de nitrógeno (NO2). Estos gases son producidos principalmente por la combustión de combustibles fósiles en vehículos y plantas industriales. Los NOx son contaminantes peligrosos para la salud humana y el medio ambiente.
+
+Ubicación de la estación de calidad del aire de la cual se tomaron los datos:
+
+```{r}
+# Coordenadas de las estaciones
+# Coordenadas de las estaciones
+estaciones <- data.frame(
+  nombre = c("Las Aguilas", "Atemajac"),
+  lat = c(20.630983, 20.719626),
+  long = c(-103.416735, -103.355412)
+)
+
+# Crear mapa interactivo
+m <- leaflet() %>%
+  addTiles() %>%
+  addMarkers(data = estaciones, ~long, ~lat,
+             label = ~nombre,
+             labelOptions = labelOptions(noHide = TRUE))
+m
+```
+
+
+
+
