@@ -1,0 +1,171 @@
+---
+title: "Dashboard de calidad del aire"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(dygraphs)
+library(leaflet)
+library(plotly)
+library(readr)
+set.seed(123)
+```
+
+```{r}
+datos <- read_csv("datos.csv")
+dia <- seq(as.Date("2020-01-01"), as.Date("2020-12-31"), by = "day")
+ozono <- datos$O3
+nox <- datos$NOX
+Res<- datos$Residencial
+trab <- datos$Trabajo
+```
+
+# Datos de O3 y NOx
+
+```{r}
+datos <- data.frame(fecha = dia, ozono = ozono, nox = nox, residencial = Res, trabajo = trab )
+```
+
+## Column {data-width="650"}
+
+### Ozono
+
+```{r}
+dygraph(datos[, c("fecha", "ozono")], main = "Niveles de Ozono") %>%
+  dyRangeSelector()
+```
+
+## Column {data-width="350"}
+
+### NOx
+
+```{r}
+dygraph(datos[, c("fecha", "nox")], main = "Niveles de NOx") %>%
+  dyRangeSelector()
+```
+
+### Tabla de datos
+
+```{r}
+datos %>%
+  knitr::kable()
+```
+
+# Reporte de movilidad
+
+Este es un gráfico que muestra la permanencia de personas en su casa "residential"
+
+## Column {data-width="350"}
+
+```{r}
+dygraph(datos[, c("fecha", "residencial")], main = "Movilidad residencial") %>%
+  dyRangeSelector()
+```
+
+## Column {data-width="350"}
+
+## Gente que se mueve a su trabajo
+
+```{r}
+dygraph(datos[, c("fecha", "trabajo")], main = "Movilidad laboral") %>%
+  dyRangeSelector()
+```
+
+# Regresión lineal cont
+
+```{r}
+dato <- data.frame(ozono = ozono, nox = nox)
+
+dato <- na.omit(dato)
+
+dato[] <- lapply(dato, as.numeric)
+
+```
+
+```{r}
+# Ajustar modelo de regresión lineal
+fit <- lm(nox ~ ozono, data = dato)
+```
+
+## Column {data-width="650"}
+
+Gráfica de regresión
+
+```{r}
+# Crear gráfica interactiva con plotly
+ggplot(dato, aes(x = nox, y = ozono)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red")
+```
+
+## Column {data-width="350"}
+
+Resumen del modelo
+
+```{r}
+summary(fit)
+```
+
+# Regresión lineal movilidad
+
+```{r}
+datos2 <- data.frame(ozono = ozono, nox = nox, residencial = Res )
+
+datos2 <- na.omit(datos2) #borra las filas con datos faltantes
+
+datos2[] <- lapply(datos2, as.numeric)
+
+```
+
+```{r}
+# Ajustar modelo de regresión lineal
+fit2 <- lm(ozono ~ residencial, data = datos2)
+```
+
+## Column {data-width="650"}
+
+Gráfica de regresión
+
+```{r}
+# Crear gráfica interactiva con plotly
+ggplot(datos2, aes(x = residencial, y = ozono)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red")
+```
+
+Resumen del modelo
+
+```{r}
+summary(fit2)
+```
+
+# Datos de Calidad del aire
+
+El **ozono** (O3) es una molécula compuesta por tres átomos de oxígeno. Es un gas incoloro e inestable que se encuentra en la atmósfera terrestre. A nivel del suelo, el ozono es considerado un contaminante peligroso para la salud humana y el medio ambiente.
+
+Los **óxidos de nitrógeno** (NOx) son un grupo de gases compuestos por óxido nítrico (NO) y dióxido de nitrógeno (NO2). Estos gases son producidos principalmente por la combustión de combustibles fósiles en vehículos y plantas industriales. Los NOx son contaminantes peligrosos para la salud humana y el medio ambiente.
+
+Ubicación de la estación de calidad del aire de la cual se tomaron los datos:
+
+```{r}
+# Coordenadas de las estaciones
+# Coordenadas de las estaciones
+estaciones <- data.frame(
+  nombre = c("Las Aguilas", "Atemajac", "Centro"),
+  lat = c(20.630983, 20.719626, 20.673844),
+  long = c(-103.416735, -103.355412, -103.333243),
+  ozono = c(0.02, 0.05, 0.05)
+)
+
+# Crear mapa interactivo
+m <- leaflet() %>%
+  addTiles() %>%
+  addMarkers(data = estaciones, ~long, ~lat,
+             label = ~nombre,
+             labelOptions = labelOptions(noHide = TRUE))
+m
+```
