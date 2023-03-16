@@ -11,22 +11,21 @@ library(flexdashboard)
 library(dygraphs)
 library(leaflet)
 library(plotly)
+library(readr)
 set.seed(123)
 ```
 
 ```{r}
-fechas <- seq(as.Date("2020-02-01"), as.Date("2020-07-31"), by = "day")
-ozono <- runif(length(fechas), min = 30, max = 80)
-nox <- runif(length(fechas), min = 10, max = 50)
+datos <- read_csv("datos.csv")
+dia <- seq(as.Date("2020-01-01"), as.Date("2020-12-31"), by = "day")
+ozono <- datos$O3
+nox <- datos$NOX
 ```
-
-
-
 
 # Datos de O3 y NOx
 
 ```{r}
-datos <- data.frame(fecha = fechas, ozono = ozono, nox = nox)
+datos <- data.frame(fecha = dia, ozono = ozono, nox = nox)
 ```
 
 
@@ -57,11 +56,22 @@ datos %>%
   knitr::kable()
 ```
 
+
 # Regresión lineal 
 
 ```{r}
+dato <- data.frame(ozono = ozono, nox = nox)
+
+dato <- na.omit(dato)
+
+dato[] <- lapply(dato, as.numeric)
+
+```
+
+
+```{r}
 # Ajustar modelo de regresión lineal
-modelo <- lm(nox ~ ozono, data = datos)
+fit <- lm(nox ~ ozono, data = dato)
 ```
 
 Column {data-width=650}
@@ -70,16 +80,9 @@ Column {data-width=650}
 Gráfica de regresión
 ```{r}
 # Crear gráfica interactiva con plotly
-p <- plot_ly(data = datos,
-             x = ~ozono,
-             y = ~nox,
-             type = "scatter",
-             mode = "markers") %>%
-  add_lines(x = ~ozono,
-            y = fitted(modelo),
-            line = list(color = "red"))
-
-p
+ggplot(dato, aes(x = nox, y = ozono)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "red")
 ```
 
 Column {data-width=350}
@@ -87,7 +90,7 @@ Column {data-width=350}
 
 Resumen del modelo
 ```{r}
-summary(modelo)
+summary(fit)
 ```
 
 
@@ -105,7 +108,8 @@ Ubicación de la estación de calidad del aire de la cual se tomaron los datos:
 estaciones <- data.frame(
   nombre = c("Las Aguilas", "Atemajac"),
   lat = c(20.630983, 20.719626),
-  long = c(-103.416735, -103.355412)
+  long = c(-103.416735, -103.355412),
+  ozono = c(0.02, 0.05)
 )
 
 # Crear mapa interactivo
