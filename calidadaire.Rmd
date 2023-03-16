@@ -20,12 +20,13 @@ datos <- read_csv("datos.csv")
 dia <- seq(as.Date("2020-01-01"), as.Date("2020-12-31"), by = "day")
 ozono <- datos$O3
 nox <- datos$NOX
+Mov <- datos$Mov
 ```
 
 # Datos de O3 y NOx
 
 ```{r}
-datos <- data.frame(fecha = dia, ozono = ozono, nox = nox)
+datos <- data.frame(fecha = dia, ozono = ozono, nox = nox, mov = Mov )
 ```
 
 
@@ -55,7 +56,14 @@ dygraph(datos[, c("fecha", "nox")], main = "Niveles de NOx") %>%
 datos %>%
   knitr::kable()
 ```
+# Reporte de movilidad 
 
+Este es un gráfico que muestra la permanencia de personas en su casa "residential" 
+
+```{r}
+dygraph(datos[, c("fecha", "mov")], main = "Movilidad residencial") %>%
+  dyRangeSelector()
+```
 
 # Regresión lineal 
 
