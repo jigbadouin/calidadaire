@@ -169,3 +169,12 @@ m <- leaflet() %>%
              labelOptions = labelOptions(noHide = TRUE))
 m
 ```
+
+
+# Tabla 
+
+Imagen de calidad del aire 
+
+![Calidad del aire](aire.jpg)
+
+
