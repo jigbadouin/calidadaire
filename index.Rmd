@@ -1,5 +1,5 @@
 ---
-title: "Dashboard de calidad del aire"
+title: "Dashboard La Huella que Dejamos"
 output: 
   flexdashboard::flex_dashboard:
     orientation: columns
