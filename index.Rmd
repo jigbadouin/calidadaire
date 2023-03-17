@@ -35,6 +35,24 @@ Por lo que los conocimientos que obtuve, más los conocimientos que ya tenía, p
 
 **Bajo la siguiente hipótesis: A mayor cantidad de gente en su casa: menor cantidad de emisiones atmosféricas (especialmente NOX) y mayor cantidad de generación de O3 troposférico.**
 
+Esto es lo que se va a contemplar para este proyecto: 
+
+**NOX y Ozono** (adjunto imagen para ver las consecuencias del NOX)
+<div>
+![CTabla NOX](tabla nox.png)
+</p>
+</div>
+
+**Movilidad urbana** (adjunto imagen para explicar los tipos)
+Imagen de los tipos de movilidad
+<div>
+![CTabla Movilidad](tabla movilidad.png)
+</p>
+</div>
+
+
+Y se tomará en cuenta para explicar la relación entre estos componentes con la **regresión lineal** que consiste en predecir por medio de definir variables, el valor de otra. La variable que está utilizando para predecir el valor de la otra variable se denomina variable independiente. Esta forma de análisis estima los coeficientes de la ecuación lineal, involucrando una o a más variables independientes que mejor predicen el valor de la variable dependiente.
+
 # Datos de O3 y NOx
 
 ```{r}
@@ -67,17 +85,19 @@ datos %>%
 ```
 
 # Reporte de movilidad
-
 Este es un gráfico que muestra la permanencia de personas en su casa "residential"
+Movilidad urbana: el conjunto de desplazamientos, tanto de personas como de mercancías, que se producen en una ciudad, bien sea en transporte público o privado." **Estos al momento de desplazarse con vehículos que usan combustibles fósiles para el motor, emiten gases que son perjudiciales a la calidad del aire.**
+Aquí podemos ver que durante inicios de la pandemia la mayoría se quedó en sus casas y la movilidad laboral se redujo. 
 
-## Column {data-width="350"}
+
+## Column {data-width="200"}
 
 ```{r}
 dygraph(datos[, c("fecha", "residencial")], main = "Movilidad residencial") %>%
   dyRangeSelector()
 ```
 
-## Column {data-width="350"}
+## Column {data-width="200"}
 
 ## Gente que se mueve a su trabajo
 
@@ -112,6 +132,14 @@ ggplot(dato, aes(x = nox, y = ozono)) +
   geom_point() +
   geom_smooth(method = "lm", se = FALSE, color = "red")
 ```
+
+
+La relación entre estos componentes es definitiva porque de estos se deriva algo llamado smog fotoquímico. Este fenómeno es algo que podemos ver en plena vista, porque se trata de una contaminación del aire, que se da cuando se combina niebla con humo y otras partículas contaminantes que flotan en la atmósfera, en zonas con niveles de contaminación elevada. Así, puede darse cuando hay niebla o bruma y el aspecto que tiene es que el ambiente está lleno de humo, normalmente de olor extraño y de colores que pueden ir desde el gris hasta el naranja o rojizo. Se genera a partir de la formación de ozono en las capas bajas de la atmósfera (lo que no es normal); este ozono se denomina ozono troposférico y es un contaminante secundario. Se forma a partir de una reacción con luz solar en presencia de NOx y compuestos orgánicos volátiles. Esta reacción es más frecuente en verano, ya que la luz del sol es el motor de la reacción fotoquímica. 
+Hay varias causas que producen este fenómeno, las cuales son: 
+Actividad industrial que emite humos con gases de efecto invernadero y otros contaminantes ambientales, tanto al aire como al suelo y al agua, ya que estos también terminan en el aire.
+**Las emisiones de gases de los vehículos que usan combustibles fósiles.**
+La mala gestión de residuos contaminantes tanto urbanos como en el medio rural.
+
 
 ## Column {data-width="350"}
 
@@ -148,8 +176,14 @@ ggplot(datos2, aes(x = residencial, y = ozono)) +
   geom_smooth(method = "lm", se = FALSE, color = "red")
 ```
 
-Resumen del modelo
 
+Este es un gráfico que muestra la permanencia de personas en su casa "residential"
+Movilidad urbana: el conjunto de desplazamientos, tanto de personas como de mercancías, que se producen en una ciudad, bien sea en transporte público o privado." **Estos al momento de desplazarse con vehículos que usan combustibles fósiles para el motor, emiten gases que son perjudiciales a la calidad del aire.**
+Aquí podemos ver que durante inicios de la pandemia la mayoría se quedó en sus casas y la movilidad laboral se redujo. 
+
+
+## Column {data-width="350"}
+Resumen del modelo
 ```{r}
 summary(fit2)
 ```
@@ -166,10 +200,10 @@ Ubicación de la estación de calidad del aire de la cual se tomaron los datos:
 # Coordenadas de las estaciones
 # Coordenadas de las estaciones
 estaciones <- data.frame(
-  nombre = c("Las Aguilas", "Atemajac", "Centro"),
-  lat = c(20.630983, 20.719626, 20.673844),
-  long = c(-103.416735, -103.355412, -103.333243),
-  ozono = c(0.02, 0.05, 0.05)
+  nombre = c("Las Aguilas", "Atemajac", "Centro", "Loma Dorada", "MIR", "OBL", "Tlaquepaque", "Vallarta", "Las Pintas", "Santa Fe"),
+  lat = c(20.630983, 20.719626, 20.673844, 20.631665, 20.614511, 20.700501, 20.640941, 20.680141, 20.576708, 20.528954),
+  long = c(-103.416735, -103.355412, -103.333243, -103.256809, -103.343352, -103.296648, -103.312497, -103.398572, -103.326533, -103.377180),
+  ozono = c(0.02, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05)
 )
 
 # Crear mapa interactivo
@@ -181,11 +215,5 @@ m <- leaflet() %>%
 m
 ```
 
-
-# Tabla 
-
-Imagen de calidad del aire 
-
-![Calidad del aire](aire.jpg)
 
 
