@@ -23,6 +23,17 @@ nox <- datos$NOX
 Res<- datos$Residencial
 trab <- datos$Trabajo
 ```
+# En qué consiste la Propuesta 
+La Ciencia de Datos es un área de estudio donde la estadística, las matemáticas y la programación se aprenden en conjunto. Se tuvieron tres sesiones de capacitación a manera de introducción a la carrera donde aprendimos tres esquemas generales de modelado de datos. Estos corresponden a una forma de organizar, clasificar e identificar datos de los modelos conocidos hasta el momento de  Machine Learning o Inteligencia Artificial . 
+
+Es entonces que hablamos del aprendizaje del entrenamiento supervisado donde se conocen variables de salida que se quieren estimar para predecir resultados. Aquí vimos regresión. lineal y la clasificación de datos. Es aquí donde contemplamos la cantidad de los valores, su peso y como este impacta en el modelado de datos para brindar un resultado. 
+
+Los temas visto hasta cierto punto fueron, Regresión Lineal, Clasificación y Clustering, y en base a ellos es que genero la siguiente propuesta: La Huella Que Dejamos. 
+Donde voy a abordar el tema de el Medio Ambiente y como este se impacta la mala calidad del aire  y su relación con la movilidad urbana en la huella de carbono.
+
+Por lo que los conocimientos que obtuve, más los conocimientos que ya tenía, plantearé una forma de resolverlo teniendo con una regresión lineal en R tomando en cuenta como valores, la calidad de aire y la movilidad durante el año 2020, donde comenzó la pandemia. 
+
+**Bajo la siguiente hipótesis: A mayor cantidad de gente en su casa: menor cantidad de emisiones atmosféricas (especialmente NOX) y mayor cantidad de generación de O3 troposférico.**
 
 # Datos de O3 y NOx
 
