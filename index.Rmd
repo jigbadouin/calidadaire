@@ -4,6 +4,7 @@ output:
   flexdashboard::flex_dashboard:
     orientation: columns
     vertical_layout: fill
+runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
@@ -12,6 +13,9 @@ library(dygraphs)
 library(leaflet)
 library(plotly)
 library(readr)
+library(shiny)
+library(randomForest)
+library(iml)
 set.seed(123)
 ```
 
@@ -90,14 +94,14 @@ Movilidad urbana: el conjunto de desplazamientos, tanto de personas como de merc
 Aquí podemos ver que durante inicios de la pandemia la mayoría se quedó en sus casas y la movilidad laboral se redujo. 
 
 
-## Column {data-width="200"}
+## Column {data-width="650"}
 
 ```{r}
 dygraph(datos[, c("fecha", "residencial")], main = "Movilidad residencial") %>%
   dyRangeSelector()
 ```
 
-## Column {data-width="200"}
+## Column {data-width="350"}
 
 ## Gente que se mueve a su trabajo
 
@@ -105,6 +109,7 @@ dygraph(datos[, c("fecha", "residencial")], main = "Movilidad residencial") %>%
 dygraph(datos[, c("fecha", "trabajo")], main = "Movilidad laboral") %>%
   dyRangeSelector()
 ```
+
 
 # Regresión lineal cont
 
@@ -188,7 +193,7 @@ Resumen del modelo
 summary(fit2)
 ```
 
-# Datos de Calidad del aire
+# Estaciones
 
 El **ozono** (O3) es una molécula compuesta por tres átomos de oxígeno. Es un gas incoloro e inestable que se encuentra en la atmósfera terrestre. A nivel del suelo, el ozono es considerado un contaminante peligroso para la salud humana y el medio ambiente.
 
@@ -214,6 +219,178 @@ m <- leaflet() %>%
              labelOptions = labelOptions(noHide = TRUE))
 m
 ```
+
+
+# Bosque
+
+
+```{r}
+datosrf <- read_csv("datos.csv")
+#contaminantes estacion aguila
+O3 <- datosrf$O3
+NOx <- datosrf$NOX
+
+#datos de movilidad 
+RecreativosTiendas <- datosrf$RecreativosTiendas
+AbarrotesFarmacias<- datosrf$AbarrotesFarmacias
+Parques<- datosrf$Parques
+EstacionesTransito<- datosrf$EstacionesTransito
+Trabajo <- datosrf$Trabajo
+Residencial<- datosrf$Residencial
+
+datosrf <- data.frame(O3, NOx, RecreativosTiendas, AbarrotesFarmacias, Parques, EstacionesTransito, Trabajo,Residencial   )
+
+datosrf <- na.omit(datosrf)
+
+datosrf[] <- lapply(datosrf, as.numeric)
+
+```
+
+Como vimos en apartados anteriores, el uso de la regresión lineal nos dió una "buena idea" de la relación entre las variables de movilidad urbana y la concentración de contaminantes atmosféricos, el R2 del modedlo no es suficiente como para hacer predicciones, de forma que usaremos un algortimo clásico llamado "random forest" para poder hacer predicciones más precisas, este además puede usar multiples variables de entrada para hacer predicciones.
+
+**Random Forest**
+
+Bosque aleatorio Random Forest es un algoritmo de aprendizaje automático para clasificación y regresión que se basa en la construcción de múltiples árboles de decisión. Cada árbol se construye utilizando una muestra aleatoria con reemplazo de los datos de entrenamiento y una selección aleatoria de las variables predictoras en cada división del árbol. Luego, las predicciones se realizan tomando la media (en el caso de regresión) o la moda (en el caso de clasificación) de las predicciones individuales de cada árbol.
+
+Este enfoque permite reducir la varianza y mejorar la precisión del modelo al promediar las predicciones de múltiples árboles. Además, Random Forest es capaz de manejar grandes conjuntos de datos con muchas variables predictoras y es relativamente robusto ante el ruido y los valores atípicos.
+
+**Coeficiente de determinación**
+
+El coeficiente de determinación R² es una medida estadística que indica cuánta variabilidad en una variable dependiente es explicada por un modelo. En el caso de un modelo de regresión de Random Forest, el R² se puede calcular comparando las predicciones del modelo con los valores observados.
+
+Un valor de R² cercano a 1 indica que el modelo explica una gran parte de la variabilidad en los datos, mientras que un valor cercano a 0 indica que el modelo no explica bien la variabilidad en los datos. 
+
+```{r}
+# Modelo Random Forest
+model <- randomForest(O3 ~ ., data = datosrf)
+```
+
+El coeficiente de determiación del modelo (R2) es: 
+
+```{r}
+#Evaluacion del modelo 
+# Dividir el conjunto de datos en entrenamiento y prueba
+set.seed(123) # para obtener resultados reproducibles
+train_index <- sample(nrow(datosrf), 0.8 * nrow(iris))
+train_data <- datosrf[train_index, ]
+test_data <- datosrf[-train_index, ]
+
+# Entrenar el modelo con el conjunto de entrenamiento
+model <- randomForest(O3 ~ ., data = datosrf)
+
+# Evaluar la precisión del modelo con el conjunto de prueba
+prediction <- predict(model, newdata = test_data)
+cor(prediction, test_data$O3)^2 # Coeficiente de determinación (R^2)
+
+```
+
+
+## Evaluando la importancia de cada variable del modelo
+
+
+
+
+```{r}
+# Modelo Random Forest
+model <- randomForest(O3 ~ ., data = datosrf)
+
+# Calcular la importancia relativa de las variables
+importance <- importance(model)
+
+plot_ly(x = rownames(importance), y = importance[, 1]) %>%
+  add_bars() %>%
+  layout(title = "Importancia relativa de las variables")
+```
+
+**Importanciia de las variables del modelo**
+
+La función importance(model) en R calcula la importancia de las variables en un modelo de Random Forest utilizando dos medidas: %IncMSE y IncNodePurity (también conocido como GINI)1.
+
+La medida %IncMSE se calcula permutando los valores de cada variable en los datos fuera de bolsa (OOB) para cada árbol. Luego se registra el error de predicción en la porción OOB de los datos (tasa de error para clasificación y MSE para regresión). Después se hace lo mismo después de permutar cada variable predictora2. Un aumento mayor en el MSE indica una mayor importancia de la variable
+
+Aquí claramente podemos ver que las variables "EstacionesTransito" y "RecreativosTiebdas" son las que más importancia tienen para el modelo, una posible hipótesis al respecto es que las personas en la pandemía seguían moviéndose en transporte a comprar comida y bienes en tiendas, escenciales para supervivencia básica. 
+
+El coeficeinte de determinación del modelo es: 
+
+```{r}
+cor(prediction, test_data$O3)^2 # Coeficiente de determinación (R^2)
+```
+
+
+
+## Column {data-width="650"}
+
+
+
+```{r}
+# Modelo Random Forest
+
+# Entradas del usuario para las variables predictoras
+
+# NOx
+sliderInput("NOx", "NOx (PPM)",
+            min = min(datosrf$NOx), max = max(datosrf$NOx),
+            value = mean(datosrf$NOx))
+
+# RecreativosTiendas
+sliderInput("RecreativosTiendas", "RecreativosTiendas(%)",
+            min = min(datosrf$RecreativosTiendas), max = max(datosrf$RecreativosTiendas),
+            value = mean(datosrf$RecreativosTiendas))
+
+# AbarrotesFarmacias"
+sliderInput("AbarrotesFarmacias", "AbarrotesFarmacias(%)",
+            min = min(datosrf$AbarrotesFarmacias), max = max(datosrf$AbarrotesFarmacias),
+            value = mean(datosrf$AbarrotesFarmacias))
+
+# Parques
+
+sliderInput("Parques", "Parques (%)",
+            min = min(datosrf$Parques), max = max(datosrf$Parques),
+            value = mean(datosrf$Parques))
+
+# EstacionesTransito
+sliderInput("EstacionesTransito", "EstacionesTransito (%)",
+            min = min(datosrf$EstacionesTransito), max = max(datosrf$EstacionesTransito),
+            value = mean(datosrf$EstacionesTransito))
+
+
+# Trabajo
+sliderInput("Trabajo", "Trabajo (%)",
+            min = min(datosrf$Trabajo), max = max(datosrf$Trabajo),
+            value = mean(datosrf$Trabajo))
+
+# Residencial
+sliderInput("Residencial", "Residencial(%)",
+            min = min(datosrf$Residencial), max = max(datosrf$Residencial),
+            value = mean(datosrf$Residencial))
+
+
+# Cálculo y visualización de la predicción
+renderText({
+  
+  NOx <- input$NOx
+  RecreativosTiendas <- input$RecreativosTiendas
+  AbarrotesFarmacias <-  input$AbarrotesFarmacias
+  Parques<-  input$Parques 
+  EstacionesTransito <- input$EstacionesTransito
+  Trabajo <- input$Trabajo
+  Residencial <- input$Residencial
+  
+    new_data <- data.frame(NOx  = NOx, RecreativosTiendas  = RecreativosTiendas,     AbarrotesFarmacias = AbarrotesFarmacias, Parques = Parques, EstacionesTransito  = EstacionesTransito, Trabajo = Trabajo, Residencial = Residencial )
+
+
+            
+  prediction <- predict(model, newdata=new_data)
+  
+  paste0("Concentracion de Ozono: ", round(prediction, 5), " PPM")
+})
+```
+
+Aquí podemos ver esta app interactiva que predice el nivel de Ozono troposférico en función de las variables de movilidad de Google Mobility reports y la concentración de NOx con datos de la etación "Aguilas"
+
+
+
+
 
 
 
